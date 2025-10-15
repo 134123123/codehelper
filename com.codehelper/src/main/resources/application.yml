@@ -1,0 +1,28 @@
+server:
+  port: 8080  # 后端服务端口（Android端后续需对接此端口）
+spring:
+  datasource:  # 数据库配置（后续需创建对应MySQL数据库）
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/codehelper_db?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 000000 # 替换为你的MySQL密码
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+mybatis:
+  mapper-locations: classpath:mapper/*.xml  # 扫描MyBatis映射文件
+  type-aliases-package: com.codehelper.model.entity  # 实体类别名包
+
+
+ark:
+  api:
+    key: c6f710e8-27fc-433f-a513-c239cc7f6457
+
+jwt:
+  secret-key: codehelper-secret-key-2024 # 生产环境建议通过环境变量注入
+  expire-time: 86400000
+  token-header: Authorization
+  token-prefix: Bearer
+
