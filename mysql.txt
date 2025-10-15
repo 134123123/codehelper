@@ -1,0 +1,90 @@
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS codehelper_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 使用数据库
+USE codehelper_db;
+
+-- 1. 用户表（核心认证表）
+CREATE TABLE `user` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID（主键）',
+  `username` varchar(50) NOT NULL COMMENT '登录用户名（唯一）',
+  `password` varchar(100) NOT NULL COMMENT '加密后的密码（BCrypt加密）',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '用户昵称',
+  `email` varchar(100) DEFAULT NULL COMMENT '邮箱（可选）',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '账号状态（1-正常，0-禁用）',
+  `last_login_time` datetime DEFAULT NULL COMMENT '最后登录时间',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`) COMMENT '用户名唯一约束',
+  KEY `idx_status` (`status`) COMMENT '状态索引，优化查询'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 2. 备忘录表（带用户隔离）
+CREATE TABLE `memo` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '备忘录ID（主键）',
+  `user_id` bigint NOT NULL COMMENT '所属用户ID（外键关联）',
+  `title` varchar(100) NOT NULL COMMENT '备忘录标题',
+  `content` text COMMENT '备忘录内容',
+  `priority` tinyint NOT NULL DEFAULT 2 COMMENT '优先级（1-高，2-中，3-低）',
+  `reminder_time` datetime DEFAULT NULL COMMENT '提醒时间（可选）',
+  `is_completed` tinyint NOT NULL DEFAULT 0 COMMENT '是否完成（0-未完成，1-已完成）',
+  `is_deleted` tinyint NOT NULL DEFAULT 0 COMMENT '是否删除（0-未删，1-已删）',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_user_deleted` (`user_id`,`is_deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='备忘录表';
+
+ALTER TABLE `memo`
+ADD CONSTRAINT `fk_memo_user` 
+FOREIGN KEY (`user_id`) 
+REFERENCES `user` (`id`) 
+ON DELETE CASCADE;
+
+-- 3. 代码记录表（与用户关联）
+CREATE TABLE `code_record` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '记录ID（主键）',
+  `user_id` bigint NOT NULL COMMENT '所属用户ID（外键）',
+  `question` text NOT NULL COMMENT '用户问题',
+  `answer` text COMMENT 'AI回答',
+  `language` varchar(20) DEFAULT NULL COMMENT '代码语言（如java、python）',
+  `is_collected` tinyint NOT NULL DEFAULT 0 COMMENT '是否收藏（0-未收藏，1-已收藏）',
+  `is_deleted` tinyint NOT NULL DEFAULT 0 COMMENT '是否删除（0-未删，1-已删）',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_user_collected` (`user_id`,`is_collected`),
+  CONSTRAINT `fk_code_record_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='代码问答记录表';
+
+-- 4. 用户角色表（预留权限扩展）
+CREATE TABLE `role` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '角色ID（主键）',
+  `role_name` varchar(50) NOT NULL COMMENT '角色名称（如ROLE_USER, ROLE_ADMIN）',
+  `role_desc` varchar(100) DEFAULT NULL COMMENT '角色描述',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_name` (`role_name`) COMMENT '角色名称唯一'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
+
+-- 5. 用户角色关联表（多对多）
+CREATE TABLE `user_role` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '关联ID（主键）',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_role` (`user_id`,`role_id`) COMMENT '用户角色唯一约束',
+  KEY `idx_role_id` (`role_id`),
+  CONSTRAINT `fk_user_role_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_role_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+
+-- 初始化角色数据
+INSERT INTO `role` (`role_name`, `role_desc`) VALUES 
+('ROLE_USER', '普通用户'),
+('ROLE_ADMIN', '管理员');
