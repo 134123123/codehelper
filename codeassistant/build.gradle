@@ -1,0 +1,24 @@
+buildscript {
+    ext {
+        kotlin_version = '1.9.0' // 必须与app模块中kotlin-stdlib版本一致
+    }
+    repositories {
+        // 国内镜像（确保依赖快速下载，无失败）
+        maven { url "https://maven.aliyun.com/repository/public" }
+        maven { url "https://mirrors.huaweicloud.com/repository/maven/" }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.0.0" // 与AGP版本一致
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // 关键：添加Kotlin插件
+    }
+}
+
+allprojects {
+
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
