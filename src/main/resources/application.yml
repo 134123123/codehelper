@@ -1,0 +1,44 @@
+server:
+  port: 8080  # 后端服务端口
+spring:
+  datasource:  # 数据库配置
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/codehelper_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: "000000"  # 替换为实际MySQL密码
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+
+  # 关键：添加上传配置（解决占位符问题）
+  upload:
+    base-path: D:/codehelper/upload/images/  # 确保目录已创建
+    access-url: http://localhost:8080/upload/
+    file-path: D:/codehelper/upload/images/  # 文件实际存储的本地路径
+
+  # Web资源映射配置
+  web:
+    resources:
+      static-locations: file:${spring.upload.base-path}  # 正确引用spring.upload下的配置
+    mvc:
+      static-path-pattern: /upload/**
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.codehelper.model.entity
+
+ark:
+  api:
+    key: c6f710e8-27fc-433f-a513-c239cc7f6457
+
+jwt:
+  secret-key: "MySecretKey1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/"
+  expire-time: 86400000
+  token-header: "Authorization"
+  token-prefix: "Bearer "

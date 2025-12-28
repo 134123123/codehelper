@@ -1,0 +1,12 @@
+### Maven ###
+target/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.ipr
+*.iws
+
+### System Files ###
+.DS_Store
+Thumbs.db
